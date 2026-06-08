@@ -7,15 +7,9 @@ const multer = require('multer');
 const QRCode = require('qrcode');
 const Groq = require('groq-sdk');
 
-// Try to get local IP
-let localIP = 'localhost';
-try {
-  const ip = require('ip');
-  localIP = ip.address();
-} catch {}
-
 const app = express();
 const PORT = process.env.PORT || 3000;
+const localUrl = process.env.SITE_URL || `http://localhost:${PORT}`;
 
 app.use(cors());
 app.use(express.json());
@@ -38,13 +32,13 @@ const FAST_MODEL = 'llama-3.1-8b-instant';
 // ── QR Code endpoint ────────────────────────────────────────────────────────
 app.get('/api/qr', async (req, res) => {
   try {
-    const url = `http://${localIP}:${PORT}`;
+    const url = localUrl;
     const qr = await QRCode.toDataURL(url, {
       width: 200,
       margin: 2,
       color: { dark: '#3d2c1e', light: '#fdf6ec' },
     });
-    res.json({ qr, url, ip: localIP, port: PORT });
+    res.json({ qr, url, port: PORT });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -507,12 +501,11 @@ potentialReach: string (estimated reach range e.g. "5K-50K views")` },
 
 // ── Health ──────────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', groq: !!process.env.GROQ_API_KEY, ip: localIP, port: PORT });
+  res.json({ status: 'ok', groq: !!process.env.GROQ_API_KEY, port: PORT });
 });
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n✶ Creator Studio running!`);
-  console.log(`   Local:   http://localhost:${PORT}`);
-  console.log(`   Network: http://${localIP}:${PORT}`);
-  console.log(`   QR:      http://localhost:${PORT}/api/qr\n`);
+  console.log(`   Local:   ${localUrl}`);
+  console.log(`   QR:      ${localUrl}/api/qr\n`);
 });
